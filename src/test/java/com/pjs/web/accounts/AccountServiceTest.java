@@ -1,12 +1,14 @@
-package com.example.monster.accounts;
+package com.pjs.web.accounts;
 
-import com.example.monster.accounts.entity.Account;
-import com.example.monster.accounts.entity.AccountRole;
-import com.example.monster.accounts.repository.AccountJapRepository;
-import com.example.monster.accounts.service.AccountService;
-import com.example.monster.accounts.service.CustomUserDetailsServiceImpl;
-import com.example.monster.config.AppProperties;
-import com.example.monster.common.BaseControllerTest;
+import com.pjs.web.account.entity.Account;
+import com.pjs.web.account.entity.AccountRole;
+import com.pjs.web.account.repository.AccountJapRepository;
+import com.pjs.web.account.service.AccountService;
+import com.pjs.web.account.service.AccountService;
+
+import com.pjs.web.account.service.impl.AccountServiceImpl;
+import com.pjs.web.config.AppProperties;
+import common.BaseControllerTest;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +20,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 
 public class AccountServiceTest extends BaseControllerTest {
@@ -28,7 +28,7 @@ public class AccountServiceTest extends BaseControllerTest {
     AccountService accountService;
 
     @Autowired
-    CustomUserDetailsServiceImpl customUserDetailsService;
+    AccountService accountServiceImpl;
 
     @Autowired
     AccountJapRepository accountJapRepository;
@@ -57,7 +57,7 @@ public class AccountServiceTest extends BaseControllerTest {
 
         //When
 
-        UserDetails jonsgu = customUserDetailsService.loadUserByUsername(appProperties.getUserUsername());
+        UserDetails jonsgu = accountServiceImpl.loadUserByUsername(appProperties.getUserUsername());
         //Then
         assertThat(passwordEncoder.matches(appProperties.getUserPassword(), jonsgu.getPassword())).isTrue();
     }
@@ -67,7 +67,7 @@ public class AccountServiceTest extends BaseControllerTest {
         String username = "reandom@eamil.com";
 
         try {
-            customUserDetailsService.loadUserByUsername(username);
+            accountServiceImpl.loadUserByUsername(username);
             fail("test fail");
         } catch (UsernameNotFoundException e) {
             assertThat(e.getMessage()).containsSequence(username);

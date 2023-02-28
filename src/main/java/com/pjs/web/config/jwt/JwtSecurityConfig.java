@@ -1,6 +1,6 @@
 package com.pjs.web.config.jwt;
 
-import com.example.monster.config.security.filter.JwtFilter;
+import com.pjs.web.config.filter.JwtFilter;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;

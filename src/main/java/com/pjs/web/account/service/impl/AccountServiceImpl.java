@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @Service
 @RequiredArgsConstructor
-public class AccountServiceImpl implements UserDetailsService, AccountService {
+public class AccountServiceImpl implements AccountService {
 
 
     @Autowired

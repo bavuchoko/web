@@ -1,6 +1,6 @@
 package com.pjs.web.config.filter;
 
-import com.example.monster.config.security.jwt.TokenManager;
+import com.pjs.web.config.jwt.TokenManager;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

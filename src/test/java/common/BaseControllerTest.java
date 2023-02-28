@@ -1,4 +1,4 @@
-package com.example.monster.common;
+package common;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
