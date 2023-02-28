@@ -68,17 +68,14 @@ dependencies {
 	implementation "com.querydsl:querydsl-apt:${queryDslVersion}"
 }
 
-task copyDocument(type: Copy) {
-	dependsOn asciidoctor
-	from file("build/docs/asciidoc")
-	into file("src/main/resources/static/docs")
-}
-build {
-	dependsOn copyDocument
-}
 
 ext {
 	snippetsDir = file('build/generated-snippets')
+}
+
+tasks.named('test') {
+	outputs.dir snippetsDir
+	useJUnitPlatform()
 }
 
 asciidoctor {
@@ -89,15 +86,26 @@ asciidoctor {
 asciidoctor.doFirst {
 	delete file('src/main/resources/static/docs')
 }
-
 bootJar {
 	dependsOn asciidoctor
 	copy {
 		from "${asciidoctor.outputDir}"
 		into 'BOOT-INF/classes/static/docs'
 	}
-	mainClass = 'com.example.monster.MonsterApplication'
+	mainClass = 'com.pjs.web.WebApplication'
 }
+task copyDocument(type: Copy) {
+	dependsOn asciidoctor
+	from file("build/docs/asciidoc")
+	into file("src/main/resources/static/docs")
+}
+build {
+	dependsOn copyDocument
+}
+
+
+
+
 
 // querydsl 사용할 경로 지정합니다. 현재 지정한 부분은 .gitignore에 포함되므로 git에 올라가지 않습니다.
 def querydslDir = "$buildDir/generated/'querydsl'"
