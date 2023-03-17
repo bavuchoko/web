@@ -13,9 +13,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
+    private final String pass;
 
-    @Value("${spring.redis.password}")
-    private String pass;
+    public RedisConfig(
+            @Value("${spring.redis.password}") String pass){
+        this.pass= pass;
+    }
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory();
