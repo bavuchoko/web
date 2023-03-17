@@ -1,6 +1,6 @@
 package com.pjs.web.config.filter;
 
-import com.pjs.web.config.jwt.TokenManager;
+import com.pjs.web.config.token.TokenManager;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,14 +15,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class JwtFilter  extends OncePerRequestFilter {
-    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
+public class TokenFilter extends OncePerRequestFilter {
+    private static final Logger logger = LoggerFactory.getLogger(TokenFilter.class);
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     private TokenManager tokenManager;
 
-    public JwtFilter(TokenManager tokenManager) {
+    public TokenFilter(TokenManager tokenManager) {
         this.tokenManager = tokenManager;
     }
 
@@ -37,7 +37,7 @@ public class JwtFilter  extends OncePerRequestFilter {
         String jwt = resolveToken(request); // Request에서 토큰을 받음
         String requestURI = request.getRequestURI();
         try {
-            if (StringUtils.hasText(jwt) && tokenManager.validateToken(jwt, request)) {
+            if (StringUtils.hasText(jwt) && tokenManager.validateToken(jwt)) {
                 Authentication authentication = tokenManager.getAuthentication(jwt);
                 SecurityContextHolder.getContext().setAuthentication(authentication); // resolveToke을 통해 토큰을 받아와서 유효성 검증을 하고 정상 토큰이면 SecurityContext에 저장
                 logger.debug("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}", authentication.getName(), requestURI);

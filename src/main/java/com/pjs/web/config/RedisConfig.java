@@ -1,5 +1,6 @@
-package com.pjs.web.config.redis;
+package com.pjs.web.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -13,10 +14,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
 
+    @Value("${spring.redis.password}")
+    private String pass;
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory();
-
+        lettuceConnectionFactory.setPassword(pass);
         return lettuceConnectionFactory;
     }
 

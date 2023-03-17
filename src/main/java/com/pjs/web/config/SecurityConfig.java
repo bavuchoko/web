@@ -1,20 +1,18 @@
 package com.pjs.web.config;
 
 import com.pjs.web.account.service.impl.AccountServiceImpl;
-import com.pjs.web.config.filter.JwtAccessDeniedHandler;
-import com.pjs.web.config.filter.JwtAuthenticationEntryPoint;
-import com.pjs.web.config.jwt.JwtSecurityConfig;
-import com.pjs.web.config.jwt.TokenManager;
+import com.pjs.web.config.filter.TokenAccessDeniedHandler;
+import com.pjs.web.config.filter.TokenAuthenticationEntryPoint;
+import com.pjs.web.config.token.TokenSecurityConfig;
+import com.pjs.web.config.token.TokenManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,14 +26,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     private final TokenManager tokenManager;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final TokenAuthenticationEntryPoint tokenAuthenticationEntryPoint;
+    private final TokenAccessDeniedHandler tokenAccessDeniedHandler;
 
 
-    public SecurityConfig(TokenManager tokenManager, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+    public SecurityConfig(TokenManager tokenManager, TokenAuthenticationEntryPoint tokenAuthenticationEntryPoint, TokenAccessDeniedHandler tokenAccessDeniedHandler) {
         this.tokenManager = tokenManager;
-        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-        this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
+        this.tokenAuthenticationEntryPoint = tokenAuthenticationEntryPoint;
+        this.tokenAccessDeniedHandler = tokenAccessDeniedHandler;
     }
 
 
@@ -47,28 +45,12 @@ public class SecurityConfig {
     AccountServiceImpl accountServiceImpl;
 
 
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(accountServiceImpl).passwordEncoder(passwordEncoder);
-    }
-
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .antMatchers(
-                        "/favicon.ico",
-                        "/docs/**",
-                        "/hello/**",
-                        "/imagePath/**",
-                        "/docs/**"
-                );
-    }
 
 
     //인증서버 설정시 시큐리시 설정에 SecurityFilterChain 이 있으면 둘중 하나 선택하라고 에러남
@@ -78,8 +60,8 @@ public class SecurityConfig {
                 .httpBasic().disable()
                 .csrf().disable()
                 .exceptionHandling()
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .accessDeniedHandler(jwtAccessDeniedHandler)
+                .authenticationEntryPoint(tokenAuthenticationEntryPoint)
+                .accessDeniedHandler(tokenAccessDeniedHandler)
 
             .and()
                 .sessionManagement()
@@ -93,7 +75,7 @@ public class SecurityConfig {
                 .antMatchers("/admin/*").hasRole("ADMIN")
                 .anyRequest().authenticated()
             .and()
-                .apply(new JwtSecurityConfig(tokenManager))
+                .apply(new TokenSecurityConfig(tokenManager))
 
             .and().build();
 

@@ -1,4 +1,4 @@
-package com.pjs.web.account.adapter;
+package com.pjs.web.account.dto;
 
 
 import com.pjs.web.account.entity.Account;

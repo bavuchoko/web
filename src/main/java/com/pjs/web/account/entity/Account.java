@@ -2,6 +2,9 @@ package com.pjs.web.account.entity;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.pjs.web.account.dto.AccountSerializer;
 import lombok.*;
 
 import javax.persistence.*;
@@ -25,6 +28,7 @@ public class Account {
 
     @Column(unique = true)
     private String username;
+    @JsonIgnore
     private String password;
     private String nickname;
 

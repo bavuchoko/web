@@ -1,4 +1,4 @@
-package com.pjs.web.config.jwt;
+package com.pjs.web.config.utils;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

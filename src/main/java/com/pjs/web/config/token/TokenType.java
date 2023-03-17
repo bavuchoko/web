@@ -1,4 +1,4 @@
-package com.pjs.web.config.jwt;
+package com.pjs.web.config.token;
 
 public enum TokenType {
 

@@ -1,9 +1,11 @@
-package com.pjs.web.config.jwt;
+package com.pjs.web.config.token;
 
-import com.pjs.web.account.adapter.AccountAdapter;
+import com.pjs.web.account.dto.AccountAdapter;
 import com.pjs.web.account.entity.Account;
 import com.pjs.web.account.repository.AccountJapRepository;
-import com.pjs.web.config.redis.RedisUtil;
+import com.pjs.web.common.WebCommon;
+import com.pjs.web.config.utils.CookieUtil;
+import com.pjs.web.config.utils.RedisUtil;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -19,6 +21,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
@@ -76,11 +79,10 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
         Map<String, Object> payloads = new HashMap<>();
         payloads.put("username", authentication.getName());
         payloads.put(AUTHORITIES_KEY, authorities);
-        payloads.put("nickname", nickname ==null ? "익명" : nickname);
+        payloads.put("nickname", nickname == null ? "익명" : nickname);
 
         return Jwts.builder()
                 .setSubject(authentication.getName())
-//                .claim(AUTHORITIES_KEY, authorities)
                 .setClaims(payloads)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .setIssuedAt(new Date())
@@ -89,33 +91,17 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
     }
 
     @Override
-    public String refreshAccessToken(HttpServletRequest request) {
+    public Authentication refreshAccessToken(HttpServletRequest request) {
+        //쿠키에서 갱신토큰 꺼냄
         String refreshTokenInCookie = cookieUtil.getCookie(request, TokenType.REFRESH_TOKEN.getValue()).getValue();
-        if (validateRefreshToken(request)) {
-
-
-            String username = redisUtil.getData(refreshTokenInCookie);
-            Account account = accountJapRepository.findByUsername(username)
-                    .orElseThrow(()->new UsernameNotFoundException(username));
-
-            String authorities = new AccountAdapter(account).getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.joining(","));
-
-            Map<String, Object> payloads = new HashMap<>();
-            payloads.put("username", username);
-            payloads.put(AUTHORITIES_KEY, authorities);
-            payloads.put("nickname", account.getNickname() == null ? "익명" : account.getNickname());
-
-            long now = (new Date()).getTime();
-            return Jwts.builder()
-                    .setSubject(account.getUsername())
-//                    .claim(AUTHORITIES_KEY, authorities)
-                    .setClaims(payloads)
-                    .signWith(key, SignatureAlgorithm.HS512)
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(now + this.accessTokenValidityTime))
-                    .compact();
+        //클라이언트 ip
+        String clientIP = WebCommon.getClientIp(request);
+        if (validateToken(refreshTokenInCookie)) {
+            String storedIP = redisUtil.getData(refreshTokenInCookie);
+            //갱신토큰을 Key로 redis에서 조회한 Ip 와 갱신 요청한 클라이언트 Ip 가 같으면 인증객체를 새로 생성
+            if(clientIP.equals(storedIP)){
+                return getAuthentication(refreshTokenInCookie);
+            }
         }
         return null;
     }
@@ -162,7 +148,7 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
 
 
     @Override
-    public boolean validateToken(String token, HttpServletRequest request) {
+    public boolean validateToken(String token) {
 
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
@@ -183,24 +169,7 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
 
     }
 
-    @Override
-    public boolean validateRefreshToken(HttpServletRequest request) {
-        //쿠키에서 refreshToken을 꺼냄
-        String refreshTokenInCookie = cookieUtil.getCookie(request, TokenType.REFRESH_TOKEN.getValue()).getValue();
-        //토큰을 파싱함
-        Claims claims = Jwts
-                .parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(refreshTokenInCookie)
-                .getBody();
 
-        //갱신토큰에 이상이 없으면 통과
-        if (validateToken(refreshTokenInCookie, request)){
-            return true;
-        }
-        return false;
-    }
 
     @Override
     public void destroyTokens(HttpServletRequest request) {

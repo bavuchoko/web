@@ -1,4 +1,4 @@
-package com.pjs.web.config.redis;
+package com.pjs.web.config.utils;
 
 
 import org.springframework.beans.factory.annotation.Autowired;

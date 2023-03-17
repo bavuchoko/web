@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
-public class JwtAuthenticationEntryPoint  implements AuthenticationEntryPoint {
+public class TokenAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     ObjectMapper objectMapper = new ObjectMapper();
 

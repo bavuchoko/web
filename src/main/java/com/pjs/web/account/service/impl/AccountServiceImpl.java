@@ -1,15 +1,17 @@
 package com.pjs.web.account.service.impl;
 
 
-import com.pjs.web.account.adapter.AccountAdapter;
+import com.pjs.web.account.dto.AccountAdapter;
 import com.pjs.web.account.dto.AccountDto;
 import com.pjs.web.account.entity.Account;
 import com.pjs.web.account.repository.AccountJapRepository;
 import com.pjs.web.account.service.AccountService;
-import com.pjs.web.config.redis.RedisUtil;
-import com.pjs.web.config.jwt.CookieUtil;
-import com.pjs.web.config.jwt.TokenManager;
-import com.pjs.web.config.jwt.TokenType;
+import com.pjs.web.common.WebCommon;
+import com.pjs.web.config.utils.RedisUtil;
+import com.pjs.web.config.utils.CookieUtil;
+import com.pjs.web.config.token.TokenManager;
+import com.pjs.web.config.token.TokenType;
+import jdk.jfr.Frequency;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,10 +23,10 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -55,7 +57,7 @@ public class AccountServiceImpl implements AccountService {
     public Account saveAccount(Account account) {
 
         accountJapRepository.findByUsername(account.getUsername()).ifPresent(e->{
-            throw new IllegalStateException("이미 가입된 사용자입니다");
+            throw new IllegalArgumentException("Duplicated username");
         });
         account.setPassword(this.passwordEncoder.encode(account.getPassword()));
         return this.accountJapRepository.save(account);
@@ -64,53 +66,57 @@ public class AccountServiceImpl implements AccountService {
 
 
     @Override
-    public AccountDto authorize(String username, String pass, HttpServletResponse response) throws BadCredentialsException {
-
+    public String authorize(AccountDto account, HttpServletResponse response, HttpServletRequest request) throws BadCredentialsException {
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(username, pass);
+                new UsernamePasswordAuthenticationToken(account.getUsername(), account.getPassword());
 
         Authentication authentication = authenticationManagerBuilder.getObject()
                 .authenticate(authenticationToken);
 
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String accessToken = tokenManager.createToken(authentication, TokenType.ACCESS_TOKEN);
-
-        AccountDto account = AccountDto.builder()
-                .username(authentication.getName())
-                .token(accessToken)
-                .nickname(tokenManager.getNickname(accessToken)==null ? "익명" : tokenManager.getNickname(accessToken))
-                .build();
         String refreshToken = tokenManager.createToken(authentication, TokenType.REFRESH_TOKEN);
-        redisUtil.setData(refreshToken, authentication.getName());
+        redisUtil.setData(refreshToken, WebCommon.getClientIp(request));
 
-        Cookie refreshTokenCookie = cookieUtil.createCookie("refreshToken", refreshToken);
+        Cookie refreshTokenCookie = cookieUtil.createCookie(TokenType.REFRESH_TOKEN.getValue(), refreshToken);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setHttpOnly(true);
         // expires in 7 days
         refreshTokenCookie.setMaxAge((int)(accessTokenValidityTime/1000));
         response.addCookie(refreshTokenCookie);
 
-        return account;
+        return accessToken;
     }
 
     @Override
-    public AccountDto refreshToken(HttpServletRequest request) {
-        //쿠키에서 refresh토큰을 꺼내 검증함
-        AccountDto account = null;
-        if(tokenManager.validateRefreshToken(request)){
-            String accessToken = tokenManager.refreshAccessToken(request);
-            account =AccountDto.builder()
-                    .token(accessToken)
-                    .username(tokenManager.getUsername(accessToken))
-                    .nickname(tokenManager.getNickname(accessToken) ==null ? "익명": tokenManager.getNickname(accessToken))
-                    .build();
+    public String reIssueToken(HttpServletRequest request) {
+        //쿠키에서 refreshToken을 꺼냄
+        String refreshTokenInCookie = cookieUtil.getCookie(request, TokenType.REFRESH_TOKEN.getValue()).getValue();
+        String accessToken = null;
+        if(StringUtils.hasText(refreshTokenInCookie) && tokenManager.validateToken(refreshTokenInCookie)){
+            //refresh토큰을 검증함
+            Authentication authentication = tokenManager.refreshAccessToken(request);
+            //검증을 통과하면 리턴하는 인증객체로 새로운 엑세스 토큰 발급
+            accessToken = tokenManager.createToken(authentication, TokenType.ACCESS_TOKEN);
+
+            /**
+             * todo
+             * 갱신토큰의 갱신에 관한 로직 필요
+             * 매번 엑세스 토큰이 갱신될때마다 갱신토큰을 갱신할 것인지, 갱신토큰의 유효시간이 얼마 이하 일때만 갱신할 것인지. 갱신하지 않고 갱신토큰 만료시 새로 로그인을 요구할지.
+             */
+        }else{
+            throw new IllegalArgumentException("No valid refreshToken");
         }
-        return account;
+        return accessToken;
     }
 
     @Override
     public void logout(HttpServletRequest req) {
+
+        /**
+         * todo
+         * 이미 발급된 엑세스 토큰은 어떻게 처리할 것인가.
+         */
         if(null != cookieUtil.getCookie(req, TokenType.REFRESH_TOKEN.getValue())){
         String refreshTokenInCookie = cookieUtil.getCookie(req, TokenType.REFRESH_TOKEN.getValue()).getValue();
         redisUtil.deleteData(refreshTokenInCookie);
