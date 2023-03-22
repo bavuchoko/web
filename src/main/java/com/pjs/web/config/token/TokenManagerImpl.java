@@ -74,11 +74,13 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         String nickname = ((AccountAdapter)(authentication.getPrincipal())).getAccount().getNickname();
+        String joinDate = ((AccountAdapter)(authentication.getPrincipal())).getAccount().getJoinDate().toString();
         long now = (new Date()).getTime();
         Date validity =  tokenType == TokenType.ACCESS_TOKEN ?  new Date(now + this.accessTokenValidityTime) : new Date(now + this.refreshTokenValidityTime);
         Map<String, Object> payloads = new HashMap<>();
         payloads.put("username", authentication.getName());
         payloads.put(AUTHORITIES_KEY, authorities);
+        payloads.put("joinDate", joinDate);
         payloads.put("nickname", nickname == null ? "익명" : nickname);
 
         return Jwts.builder()
@@ -144,6 +146,17 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.get("nickname").toString();
+    }
+
+    @Override
+    public String getJoinDate(String token) {
+        Claims claims = Jwts
+                .parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("joinDate").toString();
     }
 
 

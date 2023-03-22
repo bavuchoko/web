@@ -71,6 +71,7 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                 .mvcMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .antMatchers("/menus/**").permitAll()
                 .antMatchers("/api/**").permitAll()
                 .antMatchers("/admin/*").hasRole("ADMIN")
                 .anyRequest().authenticated()

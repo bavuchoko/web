@@ -8,6 +8,7 @@ import com.pjs.web.common.annotation.CurrentUser;
 import com.pjs.web.config.filter.TokenFilter;
 import com.pjs.web.config.utils.CookieUtil;
 import com.pjs.web.config.token.TokenManager;
+import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +45,8 @@ public class AccountController {
 
     private final AccountService accountService;
 
+    @Autowired
+    TokenManager tokenManager;
     @Autowired
     CookieUtil cookieUtil;
 
@@ -69,20 +73,26 @@ public class AccountController {
         }
         Map responseMap = new HashMap();
         try {
-            String accessToekn = accountService.authorize(accountDto,response, request);
+            String accessToken = accountService.authorize(accountDto,response, request);
             HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToekn);
+            httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToken);
 
             responseMap.put("status", HttpStatus.OK);
             responseMap.put("result", "success");
-            responseMap.put("token", accessToekn);
+            responseMap.put("accessToken", accessToken);
+            responseMap.put("username", tokenManager.getUsername(accessToken));
+            responseMap.put("nickname", tokenManager.getNickname(accessToken));
+            responseMap.put("joinDate", tokenManager.getJoinDate(accessToken));
             responseMap.put("message", "success to create account");
 
             return new ResponseEntity(responseMap, httpHeaders, HttpStatus.OK);
         }catch (BadCredentialsException e){
             responseMap.put("status", HttpStatus.BAD_REQUEST);
             responseMap.put("result", "failed");
-            responseMap.put("token", null);
+            responseMap.put("accessToken", null);
+            responseMap.put("username", null);
+            responseMap.put("nickname", null);
+            responseMap.put("joinDate", null);
             responseMap.put("message", e.getMessage());
             return new ResponseEntity<>("fail to login",HttpStatus.BAD_REQUEST);
         }
@@ -101,17 +111,21 @@ public class AccountController {
         Map responseMap = new HashMap();
         try {
             accountDto.setRoles(Set.of(AccountRole.USER));
+            accountDto.setJoinDate(LocalDateTime.now());
             Account account =accountDto.toEntity();
 
             accountService.saveAccount(account);
 
-            String accessToekn = accountService.authorize(accountDto, response, request);
+            String accessToken = accountService.authorize(accountDto, response, request);
             HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToekn);
+            httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToken);
 
             responseMap.put("status", HttpStatus.OK);
             responseMap.put("result", "success");
-            responseMap.put("token", accessToekn);
+            responseMap.put("accessToken", accessToken);
+            responseMap.put("username", tokenManager.getUsername(accessToken));
+            responseMap.put("nickname", tokenManager.getNickname(accessToken));
+            responseMap.put("joinDate", tokenManager.getJoinDate(accessToken));
             responseMap.put("message", "success to create account");
 
             return new ResponseEntity(responseMap, httpHeaders, HttpStatus.OK);
@@ -119,7 +133,10 @@ public class AccountController {
 
             responseMap.put("status", HttpStatus.BAD_REQUEST);
             responseMap.put("result", "failed");
-            responseMap.put("token", null);
+            responseMap.put("accessToken", null);
+            responseMap.put("username", null);
+            responseMap.put("nickname", null);
+            responseMap.put("joinDate", null);
             responseMap.put("message", e.getMessage());
 
             return new ResponseEntity<>(responseMap ,HttpStatus.BAD_REQUEST);
@@ -144,7 +161,10 @@ public class AccountController {
             String accessToken = accountService.reIssueToken(request);
             responseMap.put("status", HttpStatus.OK);
             responseMap.put("result", "success");
-            responseMap.put("token", accessToken);
+            responseMap.put("accessToken", accessToken);
+            responseMap.put("username", tokenManager.getUsername(accessToken));
+            responseMap.put("nickname", tokenManager.getNickname(accessToken));
+            responseMap.put("joinDate", tokenManager.getJoinDate(accessToken));
             responseMap.put("message", "success to create account");
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToken);
@@ -154,7 +174,10 @@ public class AccountController {
         }catch (Exception e){
             responseMap.put("status", HttpStatus.BAD_REQUEST);
             responseMap.put("result", "failed");
-            responseMap.put("token", null);
+            responseMap.put("accessToken", null);
+            responseMap.put("username", null);
+            responseMap.put("nickname", null);
+            responseMap.put("joinDate", null);
             responseMap.put("message", e.getMessage());
 
             return new ResponseEntity(responseMap, HttpStatus.BAD_REQUEST);
