@@ -35,7 +35,7 @@ public class AccountDto {
     private String token;
 
     private LocalDateTime joinDate;
-
+    private String protrait;
     public Account toEntity() {
         modelMapper.getConfiguration()
                 .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)

@@ -2,5 +2,10 @@ package com.pjs.web.common.status;
 
 public enum IaroProgress {
 
-    TODO, DOING, SUSPENDED, POSTPONE, DONE
+    TODO,
+    DOING,
+    SUSPENDED,
+    POSTPONED,
+    DONE;
+
 }

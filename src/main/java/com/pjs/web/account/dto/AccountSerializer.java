@@ -16,6 +16,7 @@ public class AccountSerializer extends JsonSerializer<Account> {
         gen.writeStringField("username", value.getUsername());
         gen.writeStringField("joinDate", value.getJoinDate().toString());
         gen.writeStringField("nickname", value.getNickname());
+        gen.writeStringField("protrait", value.getProtrait());
         gen.writeEndObject();
     }
 }
