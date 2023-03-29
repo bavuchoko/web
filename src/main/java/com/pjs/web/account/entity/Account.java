@@ -3,8 +3,6 @@ package com.pjs.web.account.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.pjs.web.account.dto.AccountSerializer;
 import lombok.*;
 
 import javax.persistence.*;
@@ -22,7 +20,7 @@ public class Account {
 
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO )
+    @GeneratedValue(strategy = GenerationType.IDENTITY )
     @Column(name = "account_id")
     private Integer id;
 
@@ -39,4 +37,5 @@ public class Account {
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private Set<AccountRole> roles;
+
 }

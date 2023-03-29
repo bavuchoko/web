@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 public interface TokenManager {
 
     String createToken(Authentication authentication, TokenType tokenType);
-    Authentication refreshAccessToken(HttpServletRequest request);
+    Authentication getAuthenticationFromRefreshToken(HttpServletRequest request);
     boolean validateToken(String token);
 
     void destroyTokens(HttpServletRequest request);

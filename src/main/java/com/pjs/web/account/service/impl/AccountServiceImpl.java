@@ -11,7 +11,6 @@ import com.pjs.web.config.utils.RedisUtil;
 import com.pjs.web.config.utils.CookieUtil;
 import com.pjs.web.config.token.TokenManager;
 import com.pjs.web.config.token.TokenType;
-import jdk.jfr.Frequency;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,16 +92,18 @@ public class AccountServiceImpl implements AccountService {
         //쿠키에서 refreshToken을 꺼냄
         String refreshTokenInCookie = cookieUtil.getCookie(request, TokenType.REFRESH_TOKEN.getValue()).getValue();
         String accessToken = null;
+        //refresh토큰을 검증함
         if(StringUtils.hasText(refreshTokenInCookie) && tokenManager.validateToken(refreshTokenInCookie)){
-            //refresh토큰을 검증함
-            Authentication authentication = tokenManager.refreshAccessToken(request);
-            //검증을 통과하면 리턴하는 인증객체로 새로운 엑세스 토큰 발급
+            //refresh토큰으로 부터 인증객체 생성
+            Authentication authentication = tokenManager.getAuthenticationFromRefreshToken(request);
             accessToken = tokenManager.createToken(authentication, TokenType.ACCESS_TOKEN);
 
             /**
              * todo
              * 갱신토큰의 갱신에 관한 로직 필요
-             * 매번 엑세스 토큰이 갱신될때마다 갱신토큰을 갱신할 것인지, 갱신토큰의 유효시간이 얼마 이하 일때만 갱신할 것인지. 갱신하지 않고 갱신토큰 만료시 새로 로그인을 요구할지.
+             * 1. 매번 엑세스 토큰이 갱신될때마다 갱신토큰을 갱신할 것인지,
+             * 2. 갱신토큰의 유효시간이 얼마 이하 일때만 갱신할 것인지.
+             * 3. 갱신하지 않고 갱신토큰 만료시 새로 로그인을 요구할지.
              */
         }else{
             throw new IllegalArgumentException("No valid refreshToken");

@@ -14,41 +14,34 @@ import java.util.List;
 @Entity
 @Getter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class IaroTask {
+@NoArgsConstructor
+public class IaroIssue {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "task_id")
+    @Column(name = "issue_id")
     private Long id;
 
     private String subject;
     private String description;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
-
     @ManyToOne(fetch =FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Account taskOpener;
+    private Account opener;
 
-
-    @OneToMany(mappedBy = "id.task")
-    private List<IaroTaskMember> members;
+    @OneToMany(mappedBy = "id.issue")
+    private List<IaroIssueMember> members;
 
     @ManyToOne(fetch =FetchType.LAZY)
     @JoinColumn(name = "project_id")
     @JsonBackReference
     private IaroProject project;
 
-    @ManyToOne(fetch =FetchType.LAZY)
-    @JoinColumn(name = "issue_id")
-    @JsonBackReference
-    private IaroIssue issue;
+    @OneToMany(mappedBy = "issue")
+    private List<IaroTask> tasks;
 
 
-    private int orders;
 
     private LocalDateTime registerDate;
     private LocalDateTime startDate;

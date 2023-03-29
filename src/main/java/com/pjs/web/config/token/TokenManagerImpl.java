@@ -93,7 +93,7 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
     }
 
     @Override
-    public Authentication refreshAccessToken(HttpServletRequest request) {
+    public Authentication getAuthenticationFromRefreshToken(HttpServletRequest request) {
         //쿠키에서 갱신토큰 꺼냄
         String refreshTokenInCookie = cookieUtil.getCookie(request, TokenType.REFRESH_TOKEN.getValue()).getValue();
         //클라이언트 ip
@@ -111,21 +111,30 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
 
     @Override
     public Authentication getAuthentication(String token) {
+        //문자열의 토큰으로부터 Claim 객체를 생성.
         Claims claims = Jwts
                 .parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+        //Claim 으로부터 권한을 Collection으로 가져온다.
         Collection<? extends GrantedAuthority> authorities =
                 Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
+        //Claim 으로부터 username을 꺼낸다.
         String username = claims.get("username", String.class);
-        UserDetails aa=  new AccountAdapter(accountJapRepository.findByUsername(username)
+        //Username으로 DB 에서 User를 조회하고 그 user로 인증객체 생성을 위해 넣어줄 UserDetail 객체를 생성한다.
+        UserDetails userDetails=  new AccountAdapter(accountJapRepository.findByUsername(username)
                 .orElseThrow(()->new UsernameNotFoundException(username)));
 
-        return new UsernamePasswordAuthenticationToken(aa, token, authorities);
+        //이 UsernamePasswordAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) 생성자는 ..
+        //     ( AccountServiceImpl 의 authorize 에서 사용한 username과 password를 받고  isAuthenticated = false 를 반환하는  UsernamePasswordAuthenticationToken 생성자와 달리 )
+        // 신뢰할 수 있는 인증토큰생성에서만 사용해야 한다. 그런데 이미 refresh 토큰 검증을 끝냈는데 굳이 DB 에서 다시 유저를 조회해 와야하나? JPA 영속성엔티티에 남아있어서 DB에 직접 조회하지는 않는가? 의문이 있음.
+        //          두 생성자의 차이는 인증 전의 인증객체인지 인증 완료 후의 객체인지에 있다.(super.setAuthenticated(false / true )  차이)
+        //          인증 전의 객체는 AccountServiceImpl 에서 UsernamePasswordAuthenticationToken 이후 authenticationManagerBuilder 의 authenticate 에서 자격증명을 시도하고 성공하면 완전히 채워진 인증객체를 반환한다.
+        return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
     }
 
     public String getUsername(String token) {

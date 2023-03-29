@@ -149,8 +149,8 @@ public class AccountController {
      * 쿠키에서 리프레쉬 토큰을 가져와서 토큰검증 후 리프레쉬토큰의 만료시간이 지나지 안았으면 새로운 토큰을 발급한다.
      * 실제 테스트 해보니 처음 정상적인 인가를 진행하면 쿠키에 refreshToken을 넣어주고 이후 요청에선 엑세스 토큰이 없어도 이 api를 요청하기만 하면
      * 새 토큰을 발급해버린다.
-     * 결국 엑세스 토큰 자체가 없는 경우(예외)와 토큰이 만료된 경우(적절)의 로직을 분리해야 할 것 같다.
-     * jwtAuthenticationEntryPoint 에서 401 처리를 할때 토큰이 없는경우를 구별해줘야 할 듯
+     * 어차피 쿠키에 refreshToken이 있는것은 정당한 토큰 갱신요청으로 볼 수 있으므로 갱신 처리를 하면 될지 아니면 accessToken이 없는 갱신 요청은 부적절한 요청으로 볼 것인지?
+     *  if jwtAuthenticationEntryPoint 에서 401 처리를 할때 토큰이 없는경우를 구별해줘야 할 듯
      */
 
     @GetMapping("/reissue")

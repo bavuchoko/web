@@ -3,7 +3,6 @@ package com.pjs.web.iaro.entity;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.pjs.web.account.dto.AccountSerializer;
 import com.pjs.web.account.entity.Account;
-import com.pjs.web.common.status.IaroProgress;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +20,7 @@ import java.util.List;
 public class IaroProject {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO )
+    @GeneratedValue(strategy = GenerationType.IDENTITY )
     @Column(name = "project_id")
     private Long id;
 
@@ -34,17 +33,13 @@ public class IaroProject {
     private Account opener;
 
 
-    @OneToMany(fetch =FetchType.LAZY)
-    @JoinColumn(name="workset_id")
-    private List<IaroWorkSet> workSet;
+    @OneToMany(mappedBy = "project")
+    private List<IaroIssue> issues;
 
 
-    @OneToMany(fetch =FetchType.LAZY)
-    @JoinColumn(name="task_id")
-    private List<IaroTask> tasks;
 
-
-    private LocalDateTime openDate;
+    private LocalDateTime registerDate;
+    private LocalDateTime startDate;
     private LocalDateTime endDate;
     private LocalDateTime deadLine;
 
