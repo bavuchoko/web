@@ -87,6 +87,7 @@ asciidoctor.doFirst {
 	delete file('src/main/resources/static/docs')
 }
 bootJar {
+	archiveFileName = 'pjsweb.jar'
 	dependsOn asciidoctor
 	copy {
 		from "${asciidoctor.outputDir}"
