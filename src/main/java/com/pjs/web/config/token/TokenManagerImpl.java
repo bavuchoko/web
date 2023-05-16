@@ -97,8 +97,8 @@ public class TokenManagerImpl implements TokenManager, InitializingBean {
         //쿠키에서 갱신토큰 꺼냄
         String refreshTokenInCookie = cookieUtil.getCookie(request, TokenType.REFRESH_TOKEN.getValue()).getValue();
         //클라이언트 ip
-        String clientIP = WebCommon.getClientIp(request);
         if (validateToken(refreshTokenInCookie)) {
+            String clientIP = WebCommon.getClientIp(request);
             String storedIP = redisUtil.getData(refreshTokenInCookie);
             //갱신토큰을 Key로 redis에서 조회한 Ip 와 갱신 요청한 클라이언트 Ip 가 같으면 인증객체를 새로 생성
             if(clientIP.equals(storedIP)){

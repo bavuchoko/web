@@ -6,11 +6,9 @@ import com.pjs.web.account.entity.AccountRole;
 import com.pjs.web.account.service.AccountService;
 import com.pjs.web.common.annotation.CurrentUser;
 import com.pjs.web.config.filter.TokenFilter;
-import com.pjs.web.config.utils.CookieUtil;
 import com.pjs.web.config.token.TokenManager;
-import io.jsonwebtoken.Jwts;
+import com.pjs.web.config.utils.CookieUtil;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -71,30 +65,13 @@ public class AccountController {
         if(errors.hasErrors()){
             return badRequest(errors);
         }
-        Map responseMap = new HashMap();
         try {
             String accessToken = accountService.authorize(accountDto,response, request);
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToken);
-
-            responseMap.put("status", HttpStatus.OK);
-            responseMap.put("result", "success");
-            responseMap.put("accessToken", accessToken);
-            responseMap.put("username", tokenManager.getUsername(accessToken));
-            responseMap.put("nickname", tokenManager.getNickname(accessToken));
-            responseMap.put("joinDate", tokenManager.getJoinDate(accessToken));
-            responseMap.put("message", "success to create account");
-
-            return new ResponseEntity(responseMap, httpHeaders, HttpStatus.OK);
+            return new ResponseEntity("success to create account", httpHeaders, HttpStatus.OK);
         }catch (BadCredentialsException e){
-            responseMap.put("status", HttpStatus.BAD_REQUEST);
-            responseMap.put("result", "failed");
-            responseMap.put("accessToken", null);
-            responseMap.put("username", null);
-            responseMap.put("nickname", null);
-            responseMap.put("joinDate", null);
-            responseMap.put("message", e.getMessage());
-            return new ResponseEntity<>("fail to login",HttpStatus.BAD_REQUEST);
+            return new ResponseEntity("fail to login",HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -108,7 +85,6 @@ public class AccountController {
         if (errors.hasErrors()) {
             return badRequest(errors);
         }
-        Map responseMap = new HashMap();
         try {
             accountDto.setRoles(Set.of(AccountRole.USER));
             accountDto.setJoinDate(LocalDateTime.now());
@@ -119,27 +95,9 @@ public class AccountController {
             String accessToken = accountService.authorize(accountDto, response, request);
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToken);
-
-            responseMap.put("status", HttpStatus.OK);
-            responseMap.put("result", "success");
-            responseMap.put("accessToken", accessToken);
-            responseMap.put("username", tokenManager.getUsername(accessToken));
-            responseMap.put("nickname", tokenManager.getNickname(accessToken));
-            responseMap.put("joinDate", tokenManager.getJoinDate(accessToken));
-            responseMap.put("message", "success to create account");
-
-            return new ResponseEntity(responseMap, httpHeaders, HttpStatus.OK);
+            return new ResponseEntity("success to create account", httpHeaders, HttpStatus.OK);
         }catch (IllegalArgumentException e){
-
-            responseMap.put("status", HttpStatus.BAD_REQUEST);
-            responseMap.put("result", "failed");
-            responseMap.put("accessToken", null);
-            responseMap.put("username", null);
-            responseMap.put("nickname", null);
-            responseMap.put("joinDate", null);
-            responseMap.put("message", e.getMessage());
-
-            return new ResponseEntity<>(responseMap ,HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("fail to join" ,HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -156,46 +114,22 @@ public class AccountController {
     @GetMapping("/reissue")
     public ResponseEntity reissue(HttpServletRequest request) {
 
-        Map responseMap = new HashMap();
         try{
             String accessToken = accountService.reIssueToken(request);
-            responseMap.put("status", HttpStatus.OK);
-            responseMap.put("result", "success");
-            responseMap.put("accessToken", accessToken);
-            responseMap.put("username", tokenManager.getUsername(accessToken));
-            responseMap.put("nickname", tokenManager.getNickname(accessToken));
-            responseMap.put("joinDate", tokenManager.getJoinDate(accessToken));
-            responseMap.put("message", "success to create account");
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(TokenFilter.AUTHORIZATION_HEADER, "Bearer " + accessToken);
-
-            return new ResponseEntity(accessToken, httpHeaders, HttpStatus.OK);
+            return new ResponseEntity("success to create account", httpHeaders, HttpStatus.OK);
 
         }catch (Exception e){
-            responseMap.put("status", HttpStatus.BAD_REQUEST);
-            responseMap.put("result", "failed");
-            responseMap.put("accessToken", null);
-            responseMap.put("username", null);
-            responseMap.put("nickname", null);
-            responseMap.put("joinDate", null);
-            responseMap.put("message", e.getMessage());
-
-            return new ResponseEntity(responseMap, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity("fail to reissue", HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/logout")
     public void logout(HttpServletRequest req){
+
         accountService.logout(req);
     }
-
-    @GetMapping("/validation")
-    public String valdationTimeCheck(@CurrentUser Account account) {
-        System.out.println(account.getNickname());
-        return  "aa";
-    }
-
-
 
     @GetMapping("/permitted")
     public String permitted(){
